@@ -1,7 +1,3 @@
-name: Build and Deploy Flask App
-description: Build Docker image for Flask app and deploy to GCE
-source:
-  branch: main  # or master, depending on your branch
 steps:
   # Step 1: Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
