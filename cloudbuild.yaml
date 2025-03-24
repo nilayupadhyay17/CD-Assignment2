@@ -1,11 +1,11 @@
 steps:
   # Step 1: Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest', '.']
+    args: ['build', '-t', 'gcr.io/upadhayay-assign2/flask-app', '.']
 
   # Step 2: Push the Docker image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest']
+    args: ['push', 'gcr.io/upadhayay-assign2/flask-app']
 
   # Step 3: SSH into the Compute Engine instance and update deployments
   - name: 'gcr.io/cloud-builders/gcloud'
