@@ -1,10 +1,27 @@
 steps:
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest', '.']
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest']
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: gcloud
-  args: ['compute', 'ssh', 'flask-instance', '--zone=us-east1-b', '--command', 'docker pull us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest && docker stop $(docker ps -q) && docker rm $(docker ps -a -q) && docker run -d -p 8080:5000 us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest']
+  # Step 1: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/upadhayay-assign2/flask-app', '.']
+
+  # Step 2: Push the Docker image to Google Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/upadhayay-assign2/flask-app']
+
+  # Step 3: SSH into the Compute Engine instance and update deployment
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'compute'
+      - 'ssh'
+      - 'flask-instance'
+      - '--zone=us-east1-b'
+      - '--command'
+      - |
+        sudo docker pull gcr.io/upadhayay-assign2/flask-app
+        sudo docker stop flask-container || true
+        sudo docker rm flask-container || true
+        sudo docker run -d -p 80:5000 --name flask-container gcr.io/upadhayay-assign2/flask-app
+
 images:
-- 'us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest'
+  - 'gcr.io/YOUR_PROJECT_ID/flask-app'
+
+timeout: '600s'
