@@ -26,4 +26,4 @@ images:
 
 timeout: '600s'
 options:
-  defaultLogsBucketBehavior:: 'gs://cd-assign2-bucket'
+   logging: CLOUD_LOGGING_ONLY
