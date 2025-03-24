@@ -16,10 +16,10 @@ steps:
       - '--zone=us-east1-b'
       - '--command'
       - |
-        sudo docker pull gcr.io/upadhayay-assign2/flask-app
+        sudo docker pull us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest
         sudo docker stop flask-container || true
         sudo docker rm flask-container || true
-        sudo docker run -d -p 80:5000 --name flask-container gcr.io/upadhayay-assign2/flask-app
+        sudo docker run -d -p 80:5000 --name flask-container us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest
 
 images:
   - 'gcr.io/YOUR_PROJECT_ID/flask-app'
