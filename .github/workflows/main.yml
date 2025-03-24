@@ -25,3 +25,5 @@ images:
   - 'us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest'
 
 timeout: '600s'
+options:
+  logsBucket: 'gs://cd-assign2-bucket'
