@@ -1,0 +1,6 @@
+.terraform
+main.tf
+.terraform.lock.hcl
+requirements.txt
+terraform.tfstate.backup
+terraform.tfstate
