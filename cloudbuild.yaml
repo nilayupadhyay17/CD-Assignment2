@@ -16,15 +16,27 @@ steps:
     args:
       - '-c'
       - |
-        mkdir -p /root/.ssh
-        gcloud secrets versions access latest --secret=your-ssh-private-key > /root/.ssh/id_rsa
-        chmod 600 /root/.ssh/id_rsa
-        gcloud compute ssh flask-instance --zone=us-east1-b --ssh-key-file=/root/.ssh/id_rsa --command="
-          echo 'SSH connected to the instance'
-          sudo docker pull us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest
-          sudo docker stop flask-container || true
-          sudo docker rm flask-container || true
-          sudo docker run -d -p 80:5000 --name flask-container us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest
-        "
+        # Fetch the private key from Secret Manager
+        gcloud secrets versions access latest --secret="ssh-private-key" > /workspace/ssh-private-key
+
+      # Set the correct file permissions for the private key
+        chmod 600 /workspace/ssh-private-key
+
+      # Set up the SSH config (if required)
+        mkdir -p ~/.ssh
+        mv /workspace/ssh-private-key ~/.ssh/google_compute_engine
+        chmod 600 ~/.ssh/google_compute_engine
+
+      # Add the Google Cloud public keys to the known hosts (this helps prevent first-time SSH prompts)
+        touch ~/.ssh/known_hosts
+        ssh-keyscan -H compute.googleapis.com >> ~/.ssh/known_hosts
+  - name: "gcr.io/cloud-builders/gcloud"
+    id: "ssh-to-vm"
+    entrypoint: "bash"
+    args:
+    - "-c"
+    - |
+      # SSH into the VM instance
+      gcloud compute ssh flask-instance --zone=us-east1-b --quiet -- -i ~/.ssh/google_compute_engine
 options:
    logging: CLOUD_LOGGING_ONLY
