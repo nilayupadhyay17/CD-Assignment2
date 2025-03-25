@@ -12,17 +12,19 @@ steps:
   # Step 3: SSH into the existing Compute Engine instance and update the Flask app Docker container
   - name: 'gcr.io/cloud-builders/gcloud'
     id: 'Deploy to Compute Engine'
+    entrypoint: 'bash'
     args:
-      - 'compute'
-      - 'ssh'
-      - 'flask-instance'        # Replace with your Compute Engine instance name
-      - '--zone=us-east1-b'     # Replace with the correct zone
-      - '--command'
+      - '-c'
       - |
-        echo "SSH connected to the instance"
-        sudo docker pull us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest
-        sudo docker stop flask-container || true
-        sudo docker rm flask-container || true
-        sudo docker run -d -p 80:5000 --name flask-container us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest
+        mkdir -p /root/.ssh
+        gcloud secrets versions access latest --secret=your-ssh-private-key > /root/.ssh/id_rsa
+        chmod 600 /root/.ssh/id_rsa
+        gcloud compute ssh flask-instance --zone=us-east1-b --ssh-key-file=/root/.ssh/id_rsa --command="
+          echo 'SSH connected to the instance'
+          sudo docker pull us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest
+          sudo docker stop flask-container || true
+          sudo docker rm flask-container || true
+          sudo docker run -d -p 80:5000 --name flask-container us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest
+        "
 options:
    logging: CLOUD_LOGGING_ONLY
