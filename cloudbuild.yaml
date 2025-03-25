@@ -1,29 +1,28 @@
 steps:
-  # Step 1: Build the Docker image
+  # Step 1: Build the Docker image for the updated Flask app
   - name: 'gcr.io/cloud-builders/docker'
+    id: 'Docker Build'
     args: ['build', '-t', 'us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest', '.']
 
-  # Step 2: Push the Docker image to Artifact Registry
+  # Step 2: Push the Docker image to Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'
+    id: 'Docker Push'
     args: ['push', 'us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest']
 
-  # Step 3: SSH into the Compute Engine instance and update deployments
+  # Step 3: SSH into the existing Compute Engine instance and update the Flask app Docker container
   - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'Deploy to Compute Engine'
     args:
       - 'compute'
       - 'ssh'
-      - 'flask-instance'
-      - '--zone=us-east1-b'
+      - 'flask-instance'        # Replace with your Compute Engine instance name
+      - '--zone=us-east1-b'     # Replace with the correct zone
       - '--command'
       - |
+        echo "SSH connected to the instance"
         sudo docker pull us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest
         sudo docker stop flask-container || true
         sudo docker rm flask-container || true
         sudo docker run -d -p 80:5000 --name flask-container us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest
-
-images:
-  - 'us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest'
-
-timeout: '600s'
 options:
    logging: CLOUD_LOGGING_ONLY
