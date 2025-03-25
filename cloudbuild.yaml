@@ -9,14 +9,13 @@ steps:
     id: 'Docker Push'
     args: ['push', 'us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest']
 
-  # Step 3: SSH into the existing Compute Engine instance and update the Flask app Docker container
+  # Step 3: Retrieve SSH private key from Secret Manager
   - name: 'gcr.io/cloud-builders/gcloud'
-    id: 'Deploy to Compute Engine'
+    id: 'Retrieve SSH Key'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        # Fetch the private key from Secret Manager
         gcloud secrets versions access latest --secret="ssh-private-key" > /workspace/ssh-private-key
         chmod 600 /workspace/ssh-private-key
         mkdir -p ~/.ssh
@@ -24,24 +23,20 @@ steps:
         chmod 600 ~/.ssh/google_compute_engine
         touch ~/.ssh/known_hosts
         ssh-keyscan -H compute.googleapis.com >> ~/.ssh/known_hosts
-  - name: "gcr.io/cloud-builders/gcloud"
-    id: "ssh-to-vm"
-    entrypoint: "bash"
-    args:
-    - "-c"
-    - |
-      # SSH into the VM instance
-      gcloud compute ssh flask-instance --zone=us-east1-b --quiet -- -i ~/.ssh/google_compute_engine
+
+  # Step 4: SSH into the Compute Engine instance and update the Docker container
   - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'Deploy to Compute Engine'
+    entrypoint: 'bash'
     args:
-      - 'compute'
-      - 'flask-instance'
-      - '--zone=us-east1-b'
-      - '--command'
+      - '-c'
       - |
-        sudo docker pull us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest
-        sudo docker stop flask-container || true
-        sudo docker rm flask-container || true
+        gcloud compute ssh flask-instance --zone=us-east1-b --quiet --command "
+        sudo docker pull us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest &&
+        sudo docker stop flask-container || true &&
+        sudo docker rm flask-container || true &&
         sudo docker run -d -p 80:5000 --name flask-container us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest
+        "
+
 options:
-   logging: CLOUD_LOGGING_ONLY
+  logging: CLOUD_LOGGING_ONLY
