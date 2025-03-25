@@ -1,42 +1,46 @@
 steps:
-  # Step 1: Build the Docker image for the updated Flask app
+  # Step 1: Build & Push Docker Image
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Docker Build'
     args: ['build', '-t', 'us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest', '.']
 
-  # Step 2: Push the Docker image to Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Docker Push'
     args: ['push', 'us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest']
 
-  # Step 3: Retrieve SSH private key from Secret Manager
+  # Step 2: Retrieve SSH Key (with error handling)
   - name: 'gcr.io/cloud-builders/gcloud'
     id: 'Retrieve SSH Key'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        gcloud secrets versions access latest --secret="ssh-private-key" > /workspace/ssh-private-key
+        set -e
+        echo "Fetching SSH Key..."
+        gcloud secrets versions access latest --secret="ssh-private-key" > /workspace/ssh-private-key || { echo "Failed to fetch SSH key"; exit 1; }
         chmod 600 /workspace/ssh-private-key
         mkdir -p ~/.ssh
         mv /workspace/ssh-private-key ~/.ssh/google_compute_engine
         chmod 600 ~/.ssh/google_compute_engine
         touch ~/.ssh/known_hosts
         ssh-keyscan -H compute.googleapis.com >> ~/.ssh/known_hosts
+        echo "SSH Key Retrieved Successfully."
 
-  # Step 4: SSH into the Compute Engine instance and update the Docker container
+  # Step 3: Deploy to Compute Engine
   - name: 'gcr.io/cloud-builders/gcloud'
     id: 'Deploy to Compute Engine'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
+        echo "Deploying to VM..."
         gcloud compute ssh flask-instance --zone=us-east1-b --quiet --command "
         sudo docker pull us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest &&
         sudo docker stop flask-container || true &&
         sudo docker rm flask-container || true &&
         sudo docker run -d -p 80:5000 --name flask-container us-east1-docker.pkg.dev/upadhayay-assign2/flask-backend-ar/flask-app:latest
         "
-
+        echo "Deployment Complete."
+        
 options:
   logging: CLOUD_LOGGING_ONLY
