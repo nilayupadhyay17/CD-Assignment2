@@ -19,13 +19,9 @@ steps:
         # Fetch the private key from Secret Manager
         gcloud secrets versions access latest --secret="ssh-private-key" > /workspace/ssh-private-key
         chmod 600 /workspace/ssh-private-key
-
-      # Set up the SSH config (if required)
         mkdir -p ~/.ssh
         mv /workspace/ssh-private-key ~/.ssh/google_compute_engine
         chmod 600 ~/.ssh/google_compute_engine
-
-      # Add the Google Cloud public keys to the known hosts (this helps prevent first-time SSH prompts)
         touch ~/.ssh/known_hosts
         ssh-keyscan -H compute.googleapis.com >> ~/.ssh/known_hosts
   - name: "gcr.io/cloud-builders/gcloud"
