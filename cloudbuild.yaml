@@ -18,8 +18,6 @@ steps:
       - |
         # Fetch the private key from Secret Manager
         gcloud secrets versions access latest --secret="ssh-private-key" > /workspace/ssh-private-key
-
-      # Set the correct file permissions for the private key
         chmod 600 /workspace/ssh-private-key
 
       # Set up the SSH config (if required)
